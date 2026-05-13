@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+:root {
+  --wow-maroon: #7f1d1d;
+  --wow-dark: #450a0a;
+  --wow-red: #dc2626;
+  --wow-soft: #fee2e2;
+  --wow-light: #fff7f7;
+  --wow-white: #ffffff;
+}
+
+body {
+  background: var(--wow-light);
+  color: #1f2937;
+}
