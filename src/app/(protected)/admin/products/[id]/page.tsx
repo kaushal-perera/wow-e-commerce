@@ -12,6 +12,10 @@ import {
   XCircle,
 } from "lucide-react";
 import { Product } from "@/lib/api/productsApi";
+import { connectDB } from "@/lib/mongodb";
+import ProductModel from "@/models/Product";
+import mongoose from "mongoose";
+import { notFound } from "next/navigation";
 
 type PageProps = {
   params: Promise<{
@@ -19,26 +23,22 @@ type PageProps = {
   }>;
 };
 
-type ApiResponse<T> = {
-  success: boolean;
-  message: string;
-  data: T;
-};
-
 async function getProduct(id: string): Promise<Product> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  await connectDB();
 
-  const response = await fetch(`${appUrl}/api/products/${id}`, {
-    cache: "no-store",
-  });
-
-  const result: ApiResponse<Product> = await response.json();
-
-  if (!response.ok || !result.success) {
-    throw new Error(result.message || "Failed to fetch product.");
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    notFound();
   }
 
-  return result.data;
+  const product = await ProductModel.findById(id)
+    .populate("categoryId", "name slug")
+    .lean();
+
+  if (!product) {
+    notFound();
+  }
+
+  return JSON.parse(JSON.stringify(product));
 }
 
 function getStockStatus(product: Product) {
