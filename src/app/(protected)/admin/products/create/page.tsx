@@ -10,17 +10,18 @@ type ApiResponse<T> = {
 };
 
 async function getCategories(): Promise<Category[]> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/categories`,
+    {
+      cache: "no-store",
+    },
+  );
 
-  const response = await fetch(`${appUrl}/api/categories`, {
-    cache: "no-store",
-  });
-
-  const result: ApiResponse<Category[]> = await response.json();
-
-  if (!response.ok || !result.success) {
-    throw new Error(result.message || "Failed to fetch categories.");
+  if (!response.ok) {
+    throw new Error("Failed to fetch categories");
   }
+
+  const result = await response.json();
 
   return result.data;
 }
