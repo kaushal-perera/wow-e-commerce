@@ -2,28 +2,17 @@ import Link from "next/link";
 import { ArrowLeft, Package } from "lucide-react";
 import ProductForm from "@/components/admin/products/ProductForm";
 import { Category } from "@/lib/api/categoriesApi";
-
-type ApiResponse<T> = {
-  success: boolean;
-  message: string;
-  data: T;
-};
+import { connectDB } from "@/lib/mongodb";
+import CategoryModel from "@/models/Category";
 
 async function getCategories(): Promise<Category[]> {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/categories`,
-    {
-      cache: "no-store",
-    },
-  );
+  await connectDB();
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch categories");
-  }
+  const categories = await CategoryModel.find()
+    .sort({ createdAt: -1 })
+    .lean();
 
-  const result = await response.json();
-
-  return result.data;
+  return JSON.parse(JSON.stringify(categories));
 }
 
 export default async function CreateProductPage() {
