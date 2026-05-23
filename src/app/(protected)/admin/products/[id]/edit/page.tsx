@@ -3,6 +3,11 @@ import { ArrowLeft, Package } from "lucide-react";
 import ProductForm from "@/components/admin/products/ProductForm";
 import { Product } from "@/lib/api/productsApi";
 import { Category } from "@/lib/api/categoriesApi";
+import { connectDB } from "@/lib/mongodb";
+import ProductModel from "@/models/Product";
+import CategoryModel from "@/models/Category";
+import mongoose from "mongoose";
+import { notFound } from "next/navigation";
 
 type PageProps = {
   params: Promise<{
@@ -10,42 +15,32 @@ type PageProps = {
   }>;
 };
 
-type ApiResponse<T> = {
-  success: boolean;
-  message: string;
-  data: T;
-};
-
 async function getProduct(id: string): Promise<Product> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  await connectDB();
 
-  const response = await fetch(`${appUrl}/api/products/${id}`, {
-    cache: "no-store",
-  });
-
-  const result: ApiResponse<Product> = await response.json();
-
-  if (!response.ok || !result.success) {
-    throw new Error(result.message || "Failed to fetch product.");
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    notFound();
   }
 
-  return result.data;
+  const product = await ProductModel.findById(id)
+    .populate("categoryId", "name slug")
+    .lean();
+
+  if (!product) {
+    notFound();
+  }
+
+  return JSON.parse(JSON.stringify(product));
 }
 
 async function getCategories(): Promise<Category[]> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  await connectDB();
 
-  const response = await fetch(`${appUrl}/api/categories`, {
-    cache: "no-store",
-  });
+  const categories = await CategoryModel.find()
+    .sort({ createdAt: -1 })
+    .lean();
 
-  const result: ApiResponse<Category[]> = await response.json();
-
-  if (!response.ok || !result.success) {
-    throw new Error(result.message || "Failed to fetch categories.");
-  }
-
-  return result.data;
+  return JSON.parse(JSON.stringify(categories));
 }
 
 export default async function EditProductPage({ params }: PageProps) {
